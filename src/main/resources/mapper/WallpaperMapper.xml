@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.memory.picmemories.mapper.WallpaperMapper">
+
+    <resultMap id="BaseResultMap" type="com.memory.picmemories.model.Wallpaper">
+            <result property="wallpaperId" column="wallpaper_id" jdbcType="BIGINT"/>
+            <result property="wallpaperName" column="wallpaper_name" jdbcType="VARCHAR"/>
+            <result property="wallpaperDescription" column="wallpaper_description" jdbcType="VARCHAR"/>
+            <result property="wallpaperUrl" column="wallpaper_url" jdbcType="VARCHAR"/>
+            <result property="uploadDate" column="upload_date" jdbcType="TIMESTAMP"/>
+            <result property="likes" column="likes" jdbcType="INTEGER"/>
+            <result property="downloads" column="downloads" jdbcType="INTEGER"/>
+            <result property="userId" column="user_id" jdbcType="BIGINT"/>
+            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+            <result property="isDelete" column="is_delete" jdbcType="VARCHAR"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        wallpaper_id,wallpaper_name,wallpaper_description,
+        wallpaper_url,upload_date,likes,
+        downloads,user_id,create_time,
+        update_time,is_delete
+    </sql>
+</mapper>
