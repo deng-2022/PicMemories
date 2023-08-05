@@ -37,6 +37,16 @@ public class User implements Serializable {
     private String avatar;
 
     /**
+     * 电话
+     */
+    private String phone;
+
+    /**
+     * 普通用户-0 管理员-1---
+     */
+    private Integer userRole;
+
+    /**
      * 创建时间
      */
     private Date createTime;

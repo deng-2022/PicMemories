@@ -11,17 +11,15 @@ import java.util.Date;
 
 /**
  * 用户信息
- *
  * @TableName user
  */
-@TableName(value = "user")
+@TableName(value ="user")
 @Data
 public class User implements Serializable {
     /**
      * 用户id
      */
     @TableId(type = IdType.ASSIGN_ID)
-    @TableField(value = "user_id")
     private Long userId;
 
     /**
@@ -38,6 +36,16 @@ public class User implements Serializable {
      * 头像
      */
     private String avatar;
+
+    /**
+     * 电话
+     */
+    private String phone;
+
+    /**
+     * 普通用户-0 管理员-1---
+     */
+    private Integer userRole;
 
     /**
      * 创建时间

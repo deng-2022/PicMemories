@@ -15,7 +15,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import javax.annotation.Resource;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -41,30 +43,34 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      *
      * @param username 昵称
      * @param password 密码
+     * @param phone    手机号
      * @return 用户id
      */
     @Override
-    public long userRegister(String username, String password) {
+    public long userRegister(String username, String password, String phone) {
         // 1.校验
-        // 1.1.昵称, 密码不能为空
-        if (StringUtils.isAnyBlank(username, password)) throw new BusinessException(PARMS_ERROR);
+        // 1.1.昵称, 密码, 手机号不能为空
+        if (StringUtils.isAnyBlank(username, password, phone)) throw new BusinessException(PARMS_ERROR);
 
-        // 1.2.昵称不小于6位
-        if (username.length() < 6) throw new BusinessException("昵称不符合要求", 50000, "昵称不符合要求");
+        // 1.2.昵称不小于2位, 不大于10位
+        if (username.length() < 2 || username.length() > 10) throw new BusinessException("昵称不符合要求", 50000, "昵称长度不符合要求");
 
         // 1.3.昵称不包含特殊字符
-        String pattern = "^[a-zA-Z\\d]+\\$";
-        if (Pattern.matches(pattern, username)) throw new BusinessException("昵称不符合要求", 50001, "昵称包含特殊字符");
+        String pattern = "^[\\u4e00-\\u9fa5A-Za-z\\d_]+$";
+        if (!Pattern.matches(pattern, username)) throw new BusinessException("昵称不符合要求", 50001, "昵称包含特殊字符");
 
-        // 1.4.用户密码不小于6位
-        if (password.length() < 6) throw new BusinessException("密码不符合要求", 60000, "用户密码不符合要求");
+        // 1.4.密码不小于6位, 不大于10位
+        if (password.length() < 6 || password.length() > 10) throw new BusinessException("密码不符合要求", 60000, "密码长度不符合要求");
 
-        // 1.7.昵称不能重复
+        // 1.5.手机号只能为大陆手机号，符合要求
+        pattern = "^(13\\d|14[5|7]|15[0|123456789]|18[0|12356789])\\d{8}$";
+        if (!Pattern.matches(pattern, phone)) throw new BusinessException("手机号不符合要求", 50001, "手机号格式有误");
+
+        // 1.6.昵称不能重复
         QueryWrapper<User> uqw = new QueryWrapper<>();
         uqw.eq("username", username);
-//        Long count = userMapper.selectCount(uqw);
-        long count = this.count(uqw);
-        if (count > 0) throw new BusinessException("昵称不符合要求", 50002, "昵称重复");
+        Long count = userMapper.selectCount(uqw);
+        if (count > 0) throw new BusinessException("昵称不符合要求", 50002, "该昵称已存在");
 
         // 2.对密码进行加密
         String encryptPassword = DigestUtils.md5DigestAsHex((SALT + password).getBytes());
@@ -73,6 +79,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         User user = new User();
         user.setUsername(username);
         user.setPassword(encryptPassword);
+        user.setPhone(phone);
         user.setAvatar("http://ry2s7czdf.hd-bkt.clouddn.com/imgs/avatar/winter_nature_6-wallpaper-2560x1600.jpg");
 
         boolean save = this.save(user);
@@ -96,15 +103,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 1.1.昵称, 密码不能为空
         if (StringUtils.isAnyBlank(username, password)) throw new BusinessException(PARMS_ERROR);
 
-        // 1.2.昵称不小于4位
-        if (username.length() < 6) throw new BusinessException("昵称不符合要求", 50000, "昵称小于6位");
+        // 1.2.昵称不小于2位, 不大于10位
+        if (username.length() < 2 || username.length() > 10) throw new BusinessException("昵称不符合要求", 50000, "昵称长度不符合要求");
 
-        // 1.3.用户密码不小于8位
-        if (password.length() < 6) throw new BusinessException("密码不符合要求", 60000, "用户密码小于6位");
+        // 1.3.昵称不包含特殊字符
+        String pattern = "^[\\u4e00-\\u9fa5A-Za-z\\d_]+$";
+        if (!Pattern.matches(pattern, username)) throw new BusinessException("昵称不符合要求", 50001, "昵称包含特殊字符");
 
-        // 1.4.昵称不包含特殊字符
-        String pattern = "^[a-zA-Z\\d]+\\$";
-        if (Pattern.matches(pattern, username)) throw new BusinessException("昵称不符合要求", 50001, "昵称包含特殊字符");
+        // 1.4.密码不小于6位, 不大于10位
+        if (password.length() < 6 || password.length() > 10) throw new BusinessException("密码不符合要求", 60000, "密码长度不符合要求");
 
         // 1.5.检验该用户是否注册
         User user = new User();
@@ -114,18 +121,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setPassword(encryptPassword);
 
         QueryWrapper<User> qw = new QueryWrapper<>();
-        qw.eq("username", username)
-                .eq("password", encryptPassword);
+        qw.eq("username", username);
         User one = this.getOne(qw);
 
         // 1.5.1.用户未注册(包含了MP自带的逻辑删除校验)
-        if (one == null) throw new BusinessException(NOT_REGISTER);
+        if (one == null) throw new BusinessException(NOT_REGISTER, "该账户未注册");
+
+        qw.eq("password", encryptPassword);
+        one = this.getOne(qw);
+        if (one == null) throw new BusinessException("密码不符合要求", 60000, "密码错误");
+
 
         // 2.脱敏用户信息
         User safetyUser = getSafetyUser(one);
         // 3.记录用户登录态
+//        request.getSession().setAttribute(USER_LOGIN_STATE, safetyUser);
         request.getSession().setAttribute(USER_LOGIN_STATE, safetyUser);
-
         // 4.返回用户信息
         return safetyUser;
     }
@@ -244,12 +255,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public Page<User> getPage() {
         Page<User> page = new Page<>(1, 7);
         QueryWrapper<User> uqw = new QueryWrapper<>();
-        uqw.eq("username", "qwerr");
 
-        List<User> users = userMapper.selectList(uqw);
-        return page;
-
-//        return this.page(page, uqw);
+        return this.page(page, uqw);
     }
 
     /**
@@ -349,6 +356,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         User safetyUser = new User();
         safetyUser.setUserId(originUser.getUserId());
         safetyUser.setUsername(originUser.getUsername());
+        safetyUser.setPhone(originUser.getPhone());
+        safetyUser.setUserRole(originUser.getUserRole());
         safetyUser.setAvatar(originUser.getAvatar());
         safetyUser.setCreateTime(originUser.getCreateTime());
         safetyUser.setIsDelete(originUser.getIsDelete());

@@ -34,13 +34,14 @@ public class UserController {
     public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest user) {
         String username = user.getUsername();
         String password = user.getPassword();
-        if (StringUtils.isAnyBlank(username, password)) {
+        String phone = user.getPhone();
+        if (StringUtils.isAnyBlank(username, password, phone)) {
 
-            throw new BusinessException(PARMS_ERROR);
+            throw new BusinessException(PARMS_ERROR,"输入内容不能为空");
         }
 
-        long id = userService.userRegister(username, password);
-        return ResultUtils.success(id);
+        long id = userService.userRegister(username, password, phone);
+        return ResultUtils.success(id,"注册成功");
     }
 
     @PostMapping("/login")
@@ -48,11 +49,11 @@ public class UserController {
         String username = user.getUsername();
         String password = user.getPassword();
         if (StringUtils.isAnyBlank(username, password)) {
-            throw new BusinessException(PARMS_ERROR);
+            throw new BusinessException(PARMS_ERROR,"输入内容不能为空");
         }
 
         User userLogin = userService.userLogin(username, password, request);
-        return ResultUtils.success(userLogin);
+        return ResultUtils.success(userLogin,"登录成功");
     }
 
     @PostMapping("/delete")
