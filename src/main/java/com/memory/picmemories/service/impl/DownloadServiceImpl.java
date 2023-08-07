@@ -1,7 +1,7 @@
 package com.memory.picmemories.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.memory.picmemories.model.Download;
+import com.memory.picmemories.model.entity.Download;
 import com.memory.picmemories.service.DownloadService;
 import com.memory.picmemories.mapper.DownloadMapper;
 import org.springframework.stereotype.Service;

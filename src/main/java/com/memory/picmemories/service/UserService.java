@@ -3,7 +3,8 @@ package com.memory.picmemories.service;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
-import com.memory.picmemories.model.User;
+import com.memory.picmemories.model.Code2Session.Code2Session;
+import com.memory.picmemories.model.entity.User;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -14,9 +15,9 @@ import java.util.List;
  * @createDate 2023-03-08 16:07:41
  */
 public interface UserService extends IService<User> {
-    long userRegister(String username, String password,String phone);
+    long userRegister(String username, String password, String phone);
 
-    User userLogin(String username, String password, HttpServletRequest request);
+    User userLogin(String code, String username, String password, HttpServletRequest request);
 
     String getCode(String phoneNumber);
 
@@ -26,7 +27,7 @@ public interface UserService extends IService<User> {
 
     List<User> userSearch(String username, HttpServletRequest request);
 
-    User getCurrentUser(HttpServletRequest request);
+    User getCurrentUser(String session_key, HttpServletRequest request);
 
     Page<User> getPage();
 
@@ -36,5 +37,4 @@ public interface UserService extends IService<User> {
 
     String userUpdateByAdmin(User user);
 
-    Page<User> selectPage(long currentPage, long pageSize, HttpServletRequest request);
 }

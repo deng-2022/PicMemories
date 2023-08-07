@@ -1,6 +1,6 @@
 package com.memory.picmemories.mapper;
 
-import com.memory.picmemories.model.Like;
+import com.memory.picmemories.model.entity.Like;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 

@@ -1,24 +1,30 @@
 package com.memory.picmemories.service.impl;
 
+import cn.hutool.http.HttpUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.memory.picmemories.common.ErrorCode;
 import com.memory.picmemories.exception.BusinessException;
 import com.memory.picmemories.mapper.UserMapper;
-import com.memory.picmemories.model.User;
+import com.memory.picmemories.model.DTO.UserDTO;
+import com.memory.picmemories.model.entity.User;
+import com.memory.picmemories.model.Code2Session.Code2Session;
 import com.memory.picmemories.service.UserService;
 import com.memory.picmemories.utils.ValidateCodeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import javax.annotation.Resource;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
+import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -37,6 +43,18 @@ import static com.memory.picmemories.constant.UserConstant.USER_LOGIN_STATE;
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
     @Resource
     private UserMapper userMapper;
+    @Resource
+    private RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+
+    private final String appId = "wxd12f7c79bd639a9b";
+    private final String secret = "8a99ccc1802486c1387c1cda45288dd5";
+
+//    属性	类型	必填	说明
+//    appid	string	是	小程序 appId
+//    secret	string	是	小程序 appSecret
+//    js_code	string	是	登录时获取的 code，可通过wx.login获取
+//    grant_type	string	是	授权类型，此处只需填写 authorization_code
+//    返回参数
 
     /**
      * 用户注册
@@ -98,9 +116,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * @return 脱敏用户信息
      */
     @Override
-    public User userLogin(String username, String password, HttpServletRequest request) {
+    public User userLogin(String code, String username, String password, HttpServletRequest request) {
         // 1.校验
         // 1.1.昵称, 密码不能为空
+        log.info("code = " + code);
+        Code2Session code2Session = getCode2Session(appId, secret, code);
+
         if (StringUtils.isAnyBlank(username, password)) throw new BusinessException(PARMS_ERROR);
 
         // 1.2.昵称不小于2位, 不大于10位
@@ -133,12 +154,38 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
 
         // 2.脱敏用户信息
-        User safetyUser = getSafetyUser(one);
+        UserDTO safetyUser = getSafetyUser(one, code2Session);
         // 3.记录用户登录态
-//        request.getSession().setAttribute(USER_LOGIN_STATE, safetyUser);
-        request.getSession().setAttribute(USER_LOGIN_STATE, safetyUser);
+
+        String redisKey = String.format("pic_memories:user:login:%s", code2Session.getSession_key());
+
+        try {
+            redisTemplate.opsForValue().set(redisKey, safetyUser, 20, TimeUnit.HOURS);
+        } catch (Exception e) {
+            log.error("redis set key error", e);
+        }
+
         // 4.返回用户信息
         return safetyUser;
+    }
+
+    public Code2Session getCode2Session(String appId, String secret, String code) {
+        String url = "https://api.weixin.qq.com/sns/jscode2session";
+        HashMap<String, Object> paramMap = new HashMap<>();
+        paramMap.put("appid", appId);
+        paramMap.put("secret", secret);
+        paramMap.put("js_code", code);
+        paramMap.put("grant_type", "authorization_code");
+        String result = HttpUtil.get(url, paramMap);
+
+        log.info("result = " + result);
+
+        Code2Session session = JSONUtil.toBean(result, Code2Session.class);
+
+        System.out.println("session_key:" + session.getSession_key());
+        System.out.println("openid:" + session.getOpenid());
+
+        return session;
     }
 
     /**
@@ -237,18 +284,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     /**
-     * 获取当前用户登录态
-     *
-     * @param request request
-     * @return 当前用户信息
+     * @param session_key
+     * @param request
+     * @return
      */
     @Override
-    public User getCurrentUser(HttpServletRequest request) {
-        User currentUser = (User) request.getSession().getAttribute(USER_LOGIN_STATE);
-        Long id = currentUser.getUserId();
+    public User getCurrentUser(String session_key, HttpServletRequest request) {
+        String redisKey = String.format("pic_memories:user:login:%s", session_key);
+        UserDTO user = (UserDTO) redisTemplate.opsForValue().get(redisKey);
+
+        if (user == null) {
+            throw new BusinessException(NO_AUTH, "未识别到登录用户信息");
+        }
 
         // 查询数据库, 获取最新信息, 而非登录时记录的信息
-        return getById(id);
+        Long userId = user.getUserId();
+        return getById(userId);
     }
 
     @Override
@@ -312,36 +363,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     /**
-     * 展示所有用户信息
-     * Redis缓存
-     * 分页查询
+     * 用户信息脱敏
      *
-     * @param currentPage 当前页
-     * @param pageSize    每页显示数
-     * @return 用户列表
+     * @param originUser 原始用户
+     * @return 脱敏后的用户
      */
-    @Override
-    public Page<User> selectPage(long currentPage, long pageSize, HttpServletRequest request) {
-        // 获取当前登录用户
-        User loginUser = getCurrentUser(request);
-        // 拿到当前登录用户的key(每个用户都有各自对应的key)
-//        String redisKey = String.format("memory:user:recommend:%s", loginUser.getId());
-//        // 查缓存
-//        Page<User> userPage = (Page<User>) redisTemplate.opsForValue().get(redisKey);
-//        // 缓存命中, 则返回用户信息
-//        if (userPage != null) {
-//            return userPage;
-//        }
-        // 缓存未命中, 查询数据库
-        LambdaQueryWrapper<User> lqw = new LambdaQueryWrapper<>();
-        //        // 将查询到的用户信息写到缓存中
-//        try {
-//            redisTemplate.opsForValue().set(redisKey, userPage, 24, TimeUnit.HOURS);
-//        } catch (Exception e) {
-//            log.error("redis set key error", e);
-//        }
-        // 返回用户数据
-        return userMapper.selectPage(new Page<>(currentPage, pageSize), lqw);
+    public UserDTO getSafetyUser(User originUser, Code2Session code2Session) {
+        if (originUser == null) return null;
+
+        UserDTO safetyUser = new UserDTO();
+        safetyUser.setUserId(originUser.getUserId());
+        safetyUser.setUsername(originUser.getUsername());
+        safetyUser.setPhone(originUser.getPhone());
+        safetyUser.setUserRole(originUser.getUserRole());
+        safetyUser.setAvatar(originUser.getAvatar());
+        safetyUser.setCreateTime(originUser.getCreateTime());
+        safetyUser.setCreateTime(originUser.getUpdateTime());
+        safetyUser.setIsDelete(originUser.getIsDelete());
+        safetyUser.setSession_key(code2Session.getSession_key());
+        safetyUser.setOpenid(code2Session.getOpenid());
+
+        return safetyUser;
     }
 
     /**
@@ -353,13 +395,14 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public User getSafetyUser(User originUser) {
         if (originUser == null) return null;
 
-        User safetyUser = new User();
+        UserDTO safetyUser = new UserDTO();
         safetyUser.setUserId(originUser.getUserId());
         safetyUser.setUsername(originUser.getUsername());
         safetyUser.setPhone(originUser.getPhone());
         safetyUser.setUserRole(originUser.getUserRole());
         safetyUser.setAvatar(originUser.getAvatar());
         safetyUser.setCreateTime(originUser.getCreateTime());
+        safetyUser.setCreateTime(originUser.getUpdateTime());
         safetyUser.setIsDelete(originUser.getIsDelete());
 
         return safetyUser;

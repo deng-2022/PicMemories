@@ -1,6 +1,6 @@
 package com.memory.picmemories.service;
 
-import com.memory.picmemories.model.Like;
+import com.memory.picmemories.model.entity.Like;
 import com.baomidou.mybatisplus.extension.service.IService;
 
 /**

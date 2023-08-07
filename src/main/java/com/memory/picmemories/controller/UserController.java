@@ -2,18 +2,22 @@ package com.memory.picmemories.controller;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.memory.picmemories.common.BaseResponse;
-import com.memory.picmemories.common.ErrorCode;
 import com.memory.picmemories.common.ResultUtils;
 import com.memory.picmemories.exception.BusinessException;
-import com.memory.picmemories.model.User;
+import com.memory.picmemories.model.Code2Session.Code2Session;
+import com.memory.picmemories.model.entity.User;
 import com.memory.picmemories.model.request.user.UserLoginRequest;
 import com.memory.picmemories.model.request.user.UserRegisterRequest;
 import com.memory.picmemories.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+
+import java.util.Enumeration;
 
 import static com.memory.picmemories.common.ErrorCode.PARMS_ERROR;
 import static com.memory.picmemories.constant.UserConstant.USER_LOGIN_STATE;
@@ -26,6 +30,7 @@ import static com.memory.picmemories.constant.UserConstant.USER_LOGIN_STATE;
  */
 @RestController
 @RequestMapping("/user")
+@Slf4j
 public class UserController {
     @Resource
     private UserService userService;
@@ -37,23 +42,24 @@ public class UserController {
         String phone = user.getPhone();
         if (StringUtils.isAnyBlank(username, password, phone)) {
 
-            throw new BusinessException(PARMS_ERROR,"输入内容不能为空");
+            throw new BusinessException(PARMS_ERROR, "输入内容不能为空");
         }
 
         long id = userService.userRegister(username, password, phone);
-        return ResultUtils.success(id,"注册成功");
+        return ResultUtils.success(id, "注册成功");
     }
 
     @PostMapping("/login")
     public BaseResponse<User> userLogin(@RequestBody UserLoginRequest user, HttpServletRequest request) {
+        String code = user.getCode();
         String username = user.getUsername();
         String password = user.getPassword();
-        if (StringUtils.isAnyBlank(username, password)) {
-            throw new BusinessException(PARMS_ERROR,"输入内容不能为空");
+        if (StringUtils.isAnyBlank(code, username, password)) {
+            throw new BusinessException(PARMS_ERROR, "输入内容不能为空");
         }
 
-        User userLogin = userService.userLogin(username, password, request);
-        return ResultUtils.success(userLogin,"登录成功");
+        User userLogin = userService.userLogin(code, username, password, request);
+        return ResultUtils.success(userLogin, "登录成功");
     }
 
     @PostMapping("/delete")
@@ -92,10 +98,14 @@ public class UserController {
     }
 
     @GetMapping("/current")
-    public BaseResponse<User> getCurrentUser(HttpServletRequest request) {
+    public BaseResponse<User> getCurrentUser(Code2Session code2Session, HttpServletRequest request) {
         //controller对参数的校验
+        String session_key = code2Session.getSession_key();
+        if (StringUtils.isAnyBlank(session_key)) {
+            throw new BusinessException(PARMS_ERROR, "请求参数错误");
+        }
 
-        User currentUser = userService.getCurrentUser(request);
+        User currentUser = userService.getCurrentUser(session_key, request);
         return ResultUtils.success(currentUser);
     }
 

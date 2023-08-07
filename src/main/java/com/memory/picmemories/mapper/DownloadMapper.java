@@ -1,6 +1,6 @@
 package com.memory.picmemories.mapper;
 
-import com.memory.picmemories.model.Download;
+import com.memory.picmemories.model.entity.Download;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 

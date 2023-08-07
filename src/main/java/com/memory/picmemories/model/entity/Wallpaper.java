@@ -1,12 +1,11 @@
-package com.memory.picmemories.model;
+package com.memory.picmemories.model.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.Data;
+
 import java.io.Serializable;
 import java.util.Date;
-import lombok.Data;
 
 /**
  * 壁纸信息
@@ -18,6 +17,7 @@ public class Wallpaper implements Serializable {
     /**
      * 壁纸id
      */
+    @TableId(type = IdType.ASSIGN_ID)
     private Long wallpaperId;
 
     /**
@@ -46,6 +46,11 @@ public class Wallpaper implements Serializable {
     private Integer likes;
 
     /**
+     * 所属类型
+     */
+    private Integer type;
+
+    /**
      * 用户名
      */
     private Integer downloads;
@@ -56,19 +61,27 @@ public class Wallpaper implements Serializable {
     private Long userId;
 
     /**
+     * 1 - 审核中 2 - 已发布 3 - 未通过
+     */
+    private Integer status;
+
+    /**
      * 创建时间
      */
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
     private Date createTime;
 
     /**
      * 更新时间
      */
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss",timezone = "GMT+8")
     private Date updateTime;
 
     /**
      * 是否删除
      */
-    private String isDelete;
+    @TableLogic
+    private Integer isDelete;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
