@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.memory.picmemories.model.Code2Session.Code2Session;
 import com.memory.picmemories.model.entity.User;
+import com.memory.picmemories.model.request.user.UserUpdateRequest;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -19,22 +20,16 @@ public interface UserService extends IService<User> {
 
     User userLogin(String code, String username, String password, HttpServletRequest request);
 
-    String getCode(String phoneNumber);
+    String userUpdate(UserUpdateRequest user);
 
-    User codeLogin(String phoneNumber, String code, String rightCode, HttpServletRequest request);
+    String userLogout(String session_key);
 
-    String userLogout(HttpServletRequest request);
+    User getCurrentUser(String session_key);
 
-    List<User> userSearch(String username, HttpServletRequest request);
+    User adminLogin(String username, String password, HttpServletRequest request);
 
-    User getCurrentUser(String session_key, HttpServletRequest request);
+    User getLoginUser(HttpServletRequest request);
 
     Page<User> getPage();
-
-    Boolean userDelete(Long id, HttpServletRequest request);
-
-    String userUpdate(User user, User currentUser);
-
-    String userUpdateByAdmin(User user);
 
 }

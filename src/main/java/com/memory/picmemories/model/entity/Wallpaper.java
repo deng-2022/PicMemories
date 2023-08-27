@@ -61,6 +61,11 @@ public class Wallpaper implements Serializable {
     private Long userId;
 
     /**
+     * 标签
+     */
+    private String tags;
+
+    /**
      * 1 - 审核中 2 - 已发布 3 - 未通过
      */
     private Integer status;

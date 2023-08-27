@@ -45,5 +45,12 @@ mybatis-plus:
 #  configuration:
 #    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
 
+# 阿里云OSS配置
+aliyun:
+  oss:
+    end-point: oss-cn-beijing.aliyuncs.com
+    access-key-id: LTAI5t9bAnh9zthSmzTPARM4
+    access-key-secret: BwV3YKjHp4W2Hk6hYXx1FLbDMO3Qnz
+    bucket-name: pic-memories
 
 

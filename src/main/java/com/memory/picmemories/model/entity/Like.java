@@ -18,7 +18,8 @@ public class Like implements Serializable {
     /**
      * 点赞id
      */
-    private Long likeId;
+    @TableId(type = IdType.AUTO)
+    private Long id;
 
     /**
      * 点赞用户id
@@ -29,11 +30,6 @@ public class Like implements Serializable {
      * 被点赞的壁纸id
      */
     private Long wallpaperId;
-
-    /**
-     * 点赞时间
-     */
-    private Date likeDate;
 
     /**
      * 创建时间

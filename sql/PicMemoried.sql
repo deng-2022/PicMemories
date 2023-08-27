@@ -32,52 +32,32 @@ create table if not exists `wallpaper`
     `is_delete`             tinyint(1) default 0                 not null comment '是否删除'
 ) comment '壁纸信息';
 
--- 点赞信息
-create table if not exists pic_memories.`like`
+-- 上传信息
+drop table if exists pic_memories.upload;
+create table upload
 (
-    `like_id`
-        bigint
-                                 not
-                                     null
-        comment
-            '点赞id',
-    `user_id`
-        bigint
-                                 not
-                                     null
-        comment
-            '点赞用户id',
-    `wallpaper_id`
-        bigint
-                                 not
-                                     null
-        comment
-            '被点赞的壁纸id',
-    `like_date`
-        datetime
-                                 not
-                                     null
-        comment
-            '点赞时间',
-    `create_time`
-        datetime
-                     default
-                         CURRENT_TIMESTAMP
-                                 not
-                                     null
-        comment
-            '创建时间',
-    `update_time`
-        datetime
-                     default
-                         CURRENT_TIMESTAMP
-                                 not
-                                     null
-        comment
-            '更新时间',
-    `is_delete`
-        varchar(256) default '0' not null comment '是否删除'
-) comment '点赞信息';
+    id            bigint auto_increment comment 'id'
+        primary key,
+    user_id       bigint                               not null comment '上传者',
+    wallpaper_id  bigint                               not null comment '上传壁纸',
+    `create_time` datetime   default CURRENT_TIMESTAMP not null comment '创建时间',
+    `update_time` datetime   default CURRENT_TIMESTAMP not null comment '更新时间',
+    `is_delete`   tinyint(1) default 0                 not null comment '是否删除'
+)
+    comment '上传信息';
+
+-- 点赞信息
+drop table if exists `like`;
+create table `like`
+(
+    id           bigint auto_increment primary key comment '点赞id',
+    user_id      bigint                                 not null comment '点赞用户id',
+    wallpaper_id bigint                                 not null comment '被点赞的壁纸id',
+    create_time  datetime     default CURRENT_TIMESTAMP not null comment '创建时间',
+    update_time  datetime     default CURRENT_TIMESTAMP not null comment '更新时间',
+    is_delete    varchar(256) default '0'               not null comment '是否删除'
+)
+    comment '点赞信息';
 
 -- 下载信息
 create table if not exists pic_memories.`download`

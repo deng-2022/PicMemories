@@ -5,18 +5,17 @@
 <mapper namespace="com.memory.picmemories.mapper.LikeMapper">
 
     <resultMap id="BaseResultMap" type="com.memory.picmemories.model.entity.Like">
-            <result property="likeId" column="like_id" jdbcType="BIGINT"/>
-            <result property="userId" column="user_id" jdbcType="BIGINT"/>
-            <result property="wallpaperId" column="wallpaper_id" jdbcType="BIGINT"/>
-            <result property="likeDate" column="like_date" jdbcType="TIMESTAMP"/>
-            <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
-            <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
-            <result property="isDelete" column="is_delete" jdbcType="VARCHAR"/>
+        <result property="id" column="like_id" jdbcType="BIGINT"/>
+        <result property="userId" column="user_id" jdbcType="BIGINT"/>
+        <result property="wallpaperId" column="wallpaper_id" jdbcType="BIGINT"/>
+        <result property="createTime" column="create_time" jdbcType="TIMESTAMP"/>
+        <result property="updateTime" column="update_time" jdbcType="TIMESTAMP"/>
+        <result property="isDelete" column="is_delete" jdbcType="VARCHAR"/>
     </resultMap>
 
     <sql id="Base_Column_List">
-        like_id,user_id,wallpaper_id,
-        like_date,create_time,update_time,
-        is_delete
+        id
+        ,user_id,wallpaper_id,
+        create_time,update_time,is_delete
     </sql>
 </mapper>

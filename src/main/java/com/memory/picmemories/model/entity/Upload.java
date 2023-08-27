@@ -1,41 +1,34 @@
 package com.memory.picmemories.model.entity;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
-import java.io.Serializable;
-import java.util.Date;
-
+import com.baomidou.mybatisplus.annotation.*;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
+import java.io.Serializable;
+import java.util.Date;
+
 /**
- * 下载信息
- * @TableName download
+ * 上传信息
+ * @TableName upload
  */
-@TableName(value ="download")
+@TableName(value ="upload")
 @Data
-public class Download implements Serializable {
+public class Upload implements Serializable {
     /**
-     * 点赞id
+     * id
      */
-    private Long downloadId;
+    @TableId(type = IdType.ASSIGN_ID)
+    private Long id;
 
     /**
-     * 点赞用户id
+     * 上传者
      */
     private Long userId;
 
     /**
-     * 被点赞的壁纸id
+     * 上传壁纸
      */
     private Long wallpaperId;
-
-    /**
-     * 点赞时间
-     */
-    private Date likeDate;
 
     /**
      * 创建时间
@@ -52,7 +45,8 @@ public class Download implements Serializable {
     /**
      * 是否删除
      */
-    private String isDelete;
+    @TableLogic
+    private Integer isDelete;
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
