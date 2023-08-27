@@ -42,8 +42,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Resource
     private RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
 
-    private final String appId = "wxd12f7c79bd639a9b";
-    private final String secret = "8a99ccc1802486c1387c1cda45288dd5";
+
 
 //    属性	类型	必填	说明
 //    appid	string	是	小程序 appId
